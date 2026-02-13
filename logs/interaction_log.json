@@ -1,0 +1,2 @@
+{"timestamp": 1770958292.1196656, "event_type": "interaction", "source_agent": "AI_1", "target_agent": "AI_2", "interaction_type": "give", "resource": "oak_log", "outcome": "success"}
+{"timestamp": 1770963210.149949, "event_type": "interaction", "source_agent": "AI_1", "target_agent": "AI_2", "interaction_type": "give", "resource": "oak_log", "outcome": "success"}
