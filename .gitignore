@@ -1,0 +1,16 @@
+# ไม่เอาโฟลเดอร์ node_modules (ที่มีเป็นหมื่นไฟล์)
+node_modules/
+bot/node_modules/
+
+# ไม่เอาไฟล์ Logs (เพราะมันเปลี่ยนตลอดเวลาที่บอททำงาน)
+logs/
+*.log
+*.json
+
+# ยกเว้นไฟล์ตั้งค่า package.json (อันนี้เอา)
+!package.json
+!package-lock.json
+
+# ไม่เอาไฟล์ขยะของ Python
+__pycache__/
+*.pyc
