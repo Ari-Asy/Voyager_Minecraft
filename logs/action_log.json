@@ -1,0 +1,2 @@
+{"timestamp": 1770958292.1187096, "agent_id": "AI_1", "event_type": "action", "action_type": "mine", "target": "oak_log", "result": "success", "duration": 2.3, "error_message": null}
+{"timestamp": 1770963210.148923, "agent_id": "AI_1", "event_type": "action", "action_type": "mine", "target": "oak_log", "result": "success", "duration": 2.3, "error_message": null}
