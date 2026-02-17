@@ -7,6 +7,9 @@ logs/
 *.log
 *.json
 
+# ไม่เอาโฟลเดอร์ .venv
+.venv/
+
 # ยกเว้นไฟล์ตั้งค่า package.json (อันนี้เอา)
 !package.json
 !package-lock.json
