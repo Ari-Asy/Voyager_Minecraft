@@ -26,7 +26,8 @@ bot.once('spawn', () => {
     currentPlan: null,
     lastThink: 0,
     alive: true,
-    targetLockUntil: 0
+    targetLockUntil: 0,
+    learningActive: false
   }
 
   startLoops(bot, memory)

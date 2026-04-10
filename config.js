@@ -11,12 +11,27 @@ module.exports = {
   },
   ollama: {
     enabled: true,
-    endpoint: 'http://127.0.0.1:11434/api/generate',
-    model: 'gemma3:4b'
+    endpoint: 'http://127.0.0.1:11434',
+    planModel: 'gemma3:4b',          // lightweight for quick planning
+    codeModel: 'qwen2.5-coder:7b',   // for JS code generation (skill discovery)
+    embedModel: 'nomic-embed-text'    // for vector similarity search
   },
   thresholds: {
     lowHealth: 8,
     lowFood: 10,
     emergencyFood: 6
+  },
+  skill: {
+    maxRetries: 4,            // max retries per task (iterative prompting)
+    retrievalTopK: 5,         // how many skills to retrieve for context
+    minSuccessToSave: 1       // minimum successes before saving to library
+  },
+  curriculum: {
+    maxIterations: 160,       // max learning iterations
+    enabled: true
+  },
+  experience: {
+    maxEntries: 500,          // max experience entries to keep
+    summaryCount: 10          // how many recent experiences to summarize for LLM
   }
 }

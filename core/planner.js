@@ -1,6 +1,7 @@
 const config = require('../config')
+const { summarizeExperience, getExperienceHints } = require('./experience')
 
-async function askOllama(state) {
+async function askOllama(state, experienceContext) {
   const prompt = `
 You are the long-term planner for a Minecraft survival NPC.
 Return ONLY valid JSON.
@@ -22,17 +23,19 @@ Rules:
 - If isNight => hide
 - Else roam
 
+${experienceContext ? `\nLearning from past experience:\n${experienceContext}\n` : ''}
+
 Return format:
 {"action":"gather_wood","reason":"short reason"}
 State:
 ${JSON.stringify(state)}
 `.trim()
 
-  const res = await fetch(config.ollama.endpoint, {
+  const res = await fetch(`${config.ollama.endpoint}/api/generate`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
-      model: config.ollama.model,
+      model: config.ollama.planModel,
       prompt,
       stream: false,
       format: 'json'
@@ -44,7 +47,7 @@ ${JSON.stringify(state)}
   return JSON.parse(data.response)
 }
 
-function fallbackPlan(state) {
+function fallbackPlan(state, experienceHints) {
   if (state.hostile || state.health <= config.thresholds.lowHealth) {
     return { action: 'panic', reason: 'danger fallback' }
   }
@@ -66,13 +69,20 @@ function fallbackPlan(state) {
   return { action: 'roam', reason: 'default fallback' }
 }
 
-async function plan(state) {
-  if (!config.ollama.enabled) return fallbackPlan(state)
+async function plan(state, memory) {
+  // Gather experience context for LLM
+  const experienceSummary = summarizeExperience(memory)
+  const experienceHints = getExperienceHints(memory)
+  const experienceContext = experienceHints
+    ? `${experienceSummary}\n${experienceHints}`
+    : experienceSummary
+
+  if (!config.ollama.enabled) return fallbackPlan(state, experienceHints)
   try {
-    return await askOllama(state)
+    return await askOllama(state, experienceContext)
   } catch (e) {
     console.log('planner fallback:', e.message)
-    return fallbackPlan(state)
+    return fallbackPlan(state, experienceHints)
   }
 }
 
