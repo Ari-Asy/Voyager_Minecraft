@@ -12,8 +12,8 @@ module.exports = {
   ollama: {
     enabled: true,
     endpoint: 'http://127.0.0.1:11434',
-    planModel: 'gemma3:4b',          // lightweight for quick planning
-    codeModel: 'gemma3:4b',   // for JS code generation (skill discovery)
+    planModel: 'qwen2.5-coder:1.5b',          // lightweight for quick planning
+    codeModel: 'qwen2.5-coder:1.5b',   // for JS code generation (skill discovery)
     embedModel: 'nomic-embed-text',    // for vector similarity search
     useEmbeddings: false
   },

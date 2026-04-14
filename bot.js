@@ -8,7 +8,8 @@ const { startLoops } = require('./core/loop')
 const bot = mineflayer.createBot({
   host: config.mc.host,
   port: config.mc.port,
-  username: config.mc.username
+  username: config.mc.username,
+  viewDistance: 'tiny' // 👈 สำคัญที่สุด เรคเควสขอโหลดแค่ 2 chunk รอบตัวก็พอ!
 })
 
 bot.loadPlugin(pathfinder)
