@@ -1,5 +1,7 @@
 const config = require('../config')
 const { getSkillManager } = require('./skillManager')
+const controlPrimitives = require('../skills/controlPrimitives')
+const { goals } = require('mineflayer-pathfinder')
 
 /**
  * Skill Discovery — generates new skills via LLM code generation.
@@ -131,8 +133,6 @@ async function executeGeneratedCode(bot, codeInfo, skillManager) {
   const { programCode, execCode } = codeInfo
 
   // Build the execution context with control primitives + existing skills
-  const controlPrimitives = require('../skills/controlPrimitives')
-  const { goals } = require('mineflayer-pathfinder')
 
   try {
     // Create a function from the generated code

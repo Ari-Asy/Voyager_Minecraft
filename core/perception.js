@@ -9,9 +9,13 @@ function hasItem(bot, name) {
 }
 
 function findNearestTree(bot) {
+  const logIds = bot.registry.blocksArray
+    .filter(b => b.name && b.name.includes('log'))
+    .map(b => b.id)
+  
   const block = bot.findBlock({
-    matching: b => b && typeof b.name === 'string' && b.name.includes('log'),
-    maxDistance: 40
+    matching: logIds,
+    maxDistance: 24
   })
   if (!block) return null
   return {
@@ -64,7 +68,7 @@ function edibleFood(bot) {
   return bot.inventory.items().find(i => !!bot.registry.foodsByName[i.name]) || null
 }
 
-function perceive(bot, memory) {
+function perceive(bot, memory, opts = { skipEnv: false }) {
   const timeOfDay = bot.time?.timeOfDay ?? 0
   return {
     health: bot.health,
@@ -76,7 +80,7 @@ function perceive(bot, memory) {
       y: Math.floor(bot.entity.position.y),
       z: Math.floor(bot.entity.position.z)
     },
-    tree: findNearestTree(bot),
+    tree: opts.skipEnv ? null : findNearestTree(bot),
     foodMob: findNearestFoodMob(bot),
     hostile: findNearestHostile(bot),
     edibleFood: edibleFood(bot)?.name || null,
@@ -84,8 +88,7 @@ function perceive(bot, memory) {
     plankCount: itemCount(bot, 'planks'),
     stickCount: itemCount(bot, 'stick'),
     hasCraftingTable: hasItem(bot, 'crafting_table'),
-    inventory: bot.inventory.items().map(i => ({ name: i.name, count: i.count })),
-    memory
+    inventory: bot.inventory.items().map(i => ({ name: i.name, count: i.count }))
   }
 }
 

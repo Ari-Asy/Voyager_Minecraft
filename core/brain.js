@@ -9,7 +9,7 @@ async function decide(state, memory) {
     return memory.runtime.currentPlan
   }
 
-  const next = await plan(state)
+  const next = await plan(state, memory)
   return next
 }
 

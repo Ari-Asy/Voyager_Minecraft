@@ -47,8 +47,31 @@ function loadMemory() {
   return mem
 }
 
+function sanitize(obj, seen = new Set()) {
+  if (obj === null || obj === undefined) return obj
+  if (typeof obj === 'bigint') return obj.toString()
+  if (typeof obj !== 'object') return obj
+  if (seen.has(obj)) return '[Circular]'
+  seen.add(obj)
+  if (Array.isArray(obj)) {
+    const result = obj.map(v => sanitize(v, seen))
+    seen.delete(obj)
+    return result
+  }
+  const result = {}
+  for (const [k, v] of Object.entries(obj)) {
+    try {
+      result[k] = sanitize(v, seen)
+    } catch {
+      result[k] = '[Unserializable]'
+    }
+  }
+  seen.delete(obj)
+  return result
+}
+
 function saveMemory(memory) {
-  const safe = JSON.parse(JSON.stringify(memory))
+  const safe = sanitize(memory)
   delete safe.movements
   delete safe.runtime
   fs.writeFileSync(memoryFile, JSON.stringify(safe, null, 2))

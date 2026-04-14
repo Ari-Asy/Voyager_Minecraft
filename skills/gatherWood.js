@@ -7,8 +7,12 @@ function sleep(ms) {
 }
 
 async function gatherWood(bot, memory) {
+  const logIds = bot.registry.blocksArray
+    .filter(b => b.name && b.name.includes('log'))
+    .map(b => b.id)
+
   const block = bot.findBlock({
-    matching: b => b && typeof b.name === 'string' && b.name.includes('log'),
+    matching: logIds,
     maxDistance: 40
   })
 

@@ -13,10 +13,14 @@ function sleep(ms) {
  * @returns {Promise<boolean>} true if at least one was mined
  */
 async function mineBlock(bot, name, count = 1) {
+  const matchingIds = bot.registry.blocksArray
+    .filter(b => b.name && b.name.includes(name))
+    .map(b => b.id)
+
   let mined = 0
   for (let i = 0; i < count; i++) {
     const block = bot.findBlock({
-      matching: b => b && typeof b.name === 'string' && b.name.includes(name),
+      matching: matchingIds,
       maxDistance: 40
     })
     if (!block) {
@@ -77,8 +81,9 @@ async function craftItem(bot, name, count = 1) {
 
   // If no recipe, try with crafting table
   if (!recipes.length) {
+    const blockId = bot.registry.blocksByName['crafting_table']?.id
     const tableBlock = bot.findBlock({
-      matching: b => b && b.name === 'crafting_table',
+      matching: blockId,
       maxDistance: 32
     })
 
@@ -203,8 +208,9 @@ async function killMob(bot, name, timeout = 15000) {
  * @returns {Promise<boolean>}
  */
 async function smeltItem(bot, itemName, fuelName = 'coal', count = 1) {
+  const furnaceId = bot.registry.blocksByName['furnace']?.id
   const furnaceBlock = bot.findBlock({
-    matching: b => b && b.name === 'furnace',
+    matching: furnaceId,
     maxDistance: 32
   })
 

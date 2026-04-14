@@ -63,6 +63,7 @@ class SkillManager {
    * Generate embedding vector using Ollama nomic-embed-text.
    */
   async _getEmbedding(text) {
+    if (!config.ollama.useEmbeddings) return null
     try {
       const res = await fetch(`${config.ollama.endpoint}/api/embed`, {
         method: 'POST',
@@ -236,9 +237,6 @@ Description:`
     let programs = ''
     for (const [name, entry] of Object.entries(this.skills)) {
       programs += `${entry.code}\n\n`
-    }
-    if (this.controlPrimitives) {
-      programs += this.controlPrimitives + '\n\n'
     }
     return programs
   }

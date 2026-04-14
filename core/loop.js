@@ -20,8 +20,13 @@ function sleep(ms) {
 async function heartbeat(bot, memory) {
   while (true) {
     try {
-      const state = perceive(bot, memory)
+      const state = perceive(bot, memory, { skipEnv: true })
 
+      // Skip perception during learning to reduce memory pressure
+      if (memory.runtime?.learningActive) {
+        await sleep(config.loops.heartbeatMs)
+        continue
+      }
       if (state.hostile || state.health <= config.thresholds.lowHealth) {
         memory.runtime.currentPlan = { action: 'panic', reason: 'heartbeat emergency' }
       } else if (state.food <= config.thresholds.emergencyFood && state.edibleFood) {
@@ -41,9 +46,9 @@ async function heartbeat(bot, memory) {
 async function thinkLoop(bot, memory) {
   while (true) {
     try {
-      // Skip if learning loop is active
+      // Skip if learning loop is active — prevent concurrent Ollama calls
       if (memory.runtime.learningActive) {
-        await sleep(config.loops.thinkMs)
+        await sleep(1000)
         continue
       }
 
@@ -104,7 +109,7 @@ async function learningLoop(bot, memory) {
   while (iteration < maxIterations) {
     try {
       // Check if bot needs basic survival
-      const state = perceive(bot, memory)
+      const state = perceive(bot, memory, { skipEnv: true })
       if (state.health <= config.thresholds.lowHealth || state.hostile) {
         console.log('🎓 Pausing learning for survival...')
         memory.runtime.learningActive = false

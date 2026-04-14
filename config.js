@@ -6,15 +6,16 @@ module.exports = {
   },
   loops: {
     heartbeatMs: 400,
-    thinkMs: 2500,
-    saveMs: 5000
+    thinkMs: 8000,
+    saveMs: 30000
   },
   ollama: {
     enabled: true,
     endpoint: 'http://127.0.0.1:11434',
     planModel: 'gemma3:4b',          // lightweight for quick planning
-    codeModel: 'qwen2.5-coder:7b',   // for JS code generation (skill discovery)
-    embedModel: 'nomic-embed-text'    // for vector similarity search
+    codeModel: 'gemma3:4b',   // for JS code generation (skill discovery)
+    embedModel: 'nomic-embed-text',    // for vector similarity search
+    useEmbeddings: false
   },
   thresholds: {
     lowHealth: 8,
