@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "main": "bot.js",
   "scripts": {
-    "start": "node bot.js"
+    "start": "node --max-old-space-size=8192 bot.js"
   },
   "dependencies": {
     "mineflayer": "^4.20.1",
