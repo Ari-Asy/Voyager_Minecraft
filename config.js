@@ -17,14 +17,14 @@ module.exports = {
   ollama: {
     enabled: true,
     endpoint: 'http://127.0.0.1:11434',
-    planModel: 'qwen2.5-coder:1.5b',          // lightweight for quick planning
-    codeModel: 'qwen2.5-coder:1.5b',   // for JS code generation (skill discovery)
+    planModel: 'gemma3:4b',          // lightweight for quick planning
+    codeModel: 'gemma3:4b',   // for JS code generation (skill discovery)
     embedModel: 'nomic-embed-text',    // for vector similarity search
     useEmbeddings: false
   },
   groq: {
     enabled: true,
-    apiKey: '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', // ใส่ API Key ของ Groq ตรงนี้
+    apiKey: 'API_KEY_GROQ', // ใส่ API Key ของ Groq ตรงนี้
     model: 'llama-3.1-8b-instant', // หรือ 'llama-3.3-70b-versatile' ถ้าอยากได้ตัวใหญ่
   },
   thresholds: {
