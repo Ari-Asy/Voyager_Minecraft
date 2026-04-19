@@ -1,8 +1,13 @@
 module.exports = {
-  mc: {
+  bot1: {
     host: '127.0.0.1',
     port: 25565,
-    username: 'NPC_AI'
+    username: 'NPC_Ollama'
+  },
+  bot2: {
+    host: '127.0.0.1',
+    port: 25565,
+    username: 'NPC_Groq'
   },
   loops: {
     heartbeatMs: 400,
@@ -16,6 +21,11 @@ module.exports = {
     codeModel: 'qwen2.5-coder:1.5b',   // for JS code generation (skill discovery)
     embedModel: 'nomic-embed-text',    // for vector similarity search
     useEmbeddings: false
+  },
+  groq: {
+    enabled: true,
+    apiKey: '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', // ใส่ API Key ของ Groq ตรงนี้
+    model: 'llama-3.1-8b-instant', // หรือ 'llama-3.3-70b-versatile' ถ้าอยากได้ตัวใหญ่
   },
   thresholds: {
     lowHealth: 8,

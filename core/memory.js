@@ -2,7 +2,6 @@ const fs = require('fs')
 const path = require('path')
 
 const stateDir = path.join(__dirname, '..', 'state')
-const memoryFile = path.join(stateDir, 'memory.json')
 
 const DEFAULT_MEMORY = {
   home: null,
@@ -17,33 +16,31 @@ const DEFAULT_MEMORY = {
   knownTrees: [],
   knownFoodSpots: [],
   journal: [],
-  // Experience-based learning
   experience: [],
-  // Curriculum tracking
   completedTasks: [],
   failedTasks: [],
   currentTask: null,
-  // Skill library metadata (actual skills in skills.json)
   skillCount: 0
 }
 
-function ensureState() {
+function ensureState(filename) {
   if (!fs.existsSync(stateDir)) fs.mkdirSync(stateDir, { recursive: true })
-
-  if (!fs.existsSync(memoryFile)) {
-    fs.writeFileSync(memoryFile, JSON.stringify(DEFAULT_MEMORY, null, 2))
+  const memFile = path.join(stateDir, filename)
+  if (!fs.existsSync(memFile)) {
+    fs.writeFileSync(memFile, JSON.stringify(DEFAULT_MEMORY, null, 2))
   }
 }
 
-function loadMemory() {
-  ensureState()
-  const mem = JSON.parse(fs.readFileSync(memoryFile, 'utf8'))
-  // Ensure new fields exist on old save files
+function loadMemory(filename = 'memory.json') {
+  ensureState(filename)
+  const memFile = path.join(stateDir, filename)
+  const mem = JSON.parse(fs.readFileSync(memFile, 'utf8'))
   if (!Array.isArray(mem.experience)) mem.experience = []
   if (!Array.isArray(mem.completedTasks)) mem.completedTasks = []
   if (!Array.isArray(mem.failedTasks)) mem.failedTasks = []
   if (mem.currentTask === undefined) mem.currentTask = null
   if (mem.skillCount === undefined) mem.skillCount = 0
+  mem._filename = filename  // จำชื่อไฟล์ไว้สำหรับ save
   return mem
 }
 
@@ -60,21 +57,20 @@ function sanitize(obj, seen = new Set()) {
   }
   const result = {}
   for (const [k, v] of Object.entries(obj)) {
-    try {
-      result[k] = sanitize(v, seen)
-    } catch {
-      result[k] = '[Unserializable]'
-    }
+    try { result[k] = sanitize(v, seen) }
+    catch { result[k] = '[Unserializable]' }
   }
   seen.delete(obj)
   return result
 }
 
 function saveMemory(memory) {
+  const filename = memory._filename || 'memory.json'
   const safe = sanitize(memory)
   delete safe.movements
   delete safe.runtime
-  fs.writeFileSync(memoryFile, JSON.stringify(safe, null, 2))
+  delete safe._filename
+  fs.writeFileSync(path.join(stateDir, filename), JSON.stringify(safe, null, 2))
 }
 
 function journal(memory, msg) {

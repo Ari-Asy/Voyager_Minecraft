@@ -4,114 +4,74 @@ const { decide } = require('./brain')
 const { execute } = require('./executor')
 const { saveMemory } = require('./memory')
 const { CurriculumAgent } = require('./curriculum')
-const { discoverSkill } = require('./skillDiscovery')
 const { getSkillManager } = require('./skillManager')
 const { createSnapshot, recordExperience } = require('./experience')
 const { verifyAction } = require('./critic')
 
-function sleep(ms) {
-  return new Promise(r => setTimeout(r, ms))
-}
+// llmType = 'ollama' | 'groq'
+const { discoverSkill } = require('./skillDiscovery')
+const { discoverSkillGroq } = require('./skillDiscoveryGroq')
 
-/**
- * Heartbeat — emergency reactive loop (fast, runs every 400ms).
- * Handles immediate threats like hostile mobs and low health.
- */
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)) }
+
 async function heartbeat(bot, memory) {
   while (true) {
     try {
-      const state = perceive(bot, memory, { skipEnv: true })
-
-      // Skip perception during learning to reduce memory pressure
       if (memory.runtime?.learningActive) {
         await sleep(config.loops.heartbeatMs)
         continue
       }
+      const state = perceive(bot, memory)
       if (state.hostile || state.health <= config.thresholds.lowHealth) {
         memory.runtime.currentPlan = { action: 'panic', reason: 'heartbeat emergency' }
       } else if (state.food <= config.thresholds.emergencyFood && state.edibleFood) {
         memory.runtime.currentPlan = { action: 'eat_food', reason: 'heartbeat emergency eat' }
       }
-    } catch (e) {
-      console.log('heartbeat error:', e.message || e)
-    }
+    } catch (e) { console.log('heartbeat error:', e.message || e) }
     await sleep(config.loops.heartbeatMs)
   }
 }
 
-/**
- * Survival think loop — reactive planning for immediate needs.
- * Handles basic survival: fleeing, eating, gathering resources.
- */
 async function thinkLoop(bot, memory) {
   while (true) {
     try {
-      // Skip if learning loop is active — prevent concurrent Ollama calls
       if (memory.runtime.learningActive) {
         await sleep(1000)
         continue
       }
-
       const state = perceive(bot, memory)
       const plan = memory.runtime.currentPlan?.action === 'panic'
         ? memory.runtime.currentPlan
         : await decide(state, memory)
 
-      console.log('STATE:', {
-        health: state.health,
-        food: state.food,
-        isNight: state.isNight,
-        logCount: state.logCount,
-        plankCount: state.plankCount,
-        edibleFood: state.edibleFood,
-        hostile: state.hostile?.name || null,
-        tree: state.tree?.name || null,
-        foodMob: state.foodMob?.name || null
-      })
-
-      console.log('PLAN:', plan)
+      console.log(`[${memory._botName}] STATE: health=${state.health} food=${state.food} hostile=${state.hostile?.name || null}`)
+      console.log(`[${memory._botName}] PLAN:`, plan)
 
       await execute(bot, memory, plan)
       memory.runtime.lastThink = Date.now()
-    } catch (e) {
-      console.log('think error:', e.message || e)
-    }
+    } catch (e) { console.log(`[${memory._botName}] think error:`, e.message || e) }
     await sleep(config.loops.thinkMs)
   }
 }
 
-/**
- * Learning loop — curriculum-driven skill discovery.
- * Inspired by Voyager's learn() method.
- * 
- * Flow:
- * 1. Curriculum proposes task
- * 2. Skill Manager retrieves relevant skills
- * 3. Skill Discovery generates code via LLM
- * 4. Execute → Critic verifies
- * 5. Success → Save skill → Next task
- * 6. Fail → Retry with error feedback → Skip if max retries
- */
-async function learningLoop(bot, memory) {
-  // Wait for bot to stabilize
+async function learningLoop(bot, memory, llmType) {
   await sleep(5000)
 
+  const discover = llmType === 'groq' ? discoverSkillGroq : discoverSkill
   const curriculum = new CurriculumAgent(memory)
-  const skillManager = getSkillManager()
+  const skillManager = getSkillManager(memory._botName) // แยก skill library ตาม bot
   let iteration = 0
   const maxIterations = config.curriculum?.maxIterations || 160
+  const tag = `[${memory._botName}]`
 
-  console.log('\n🎓 ═══════════════════════════════════════')
-  console.log('🎓  LEARNING LOOP STARTED')
-  console.log(`🎓  Completed: ${curriculum.completedTasks.length} | Failed: ${curriculum.failedTasks.length}`)
-  console.log('🎓 ═══════════════════════════════════════\n')
+  console.log(`\n${tag} LEARNING LOOP STARTED (${llmType.toUpperCase()})`)
+  console.log(`${tag} Completed: ${curriculum.completedTasks.length} | Failed: ${curriculum.failedTasks.length}\n`)
 
   while (iteration < maxIterations) {
     try {
-      // Check if bot needs basic survival
-      const state = perceive(bot, memory, { skipEnv: true })
+      const state = perceive(bot, memory)
       if (state.health <= config.thresholds.lowHealth || state.hostile) {
-        console.log('🎓 Pausing learning for survival...')
+        console.log(`${tag} Pausing learning for survival...`)
         memory.runtime.learningActive = false
         await sleep(5000)
         continue
@@ -119,110 +79,70 @@ async function learningLoop(bot, memory) {
 
       memory.runtime.learningActive = true
 
-      // 1. Propose next task
       const { task, context } = await curriculum.proposeNextTask(state)
       memory.currentTask = task
 
-      console.log('\n🎓 ═══════════════════════════════════════')
-      console.log(`🎓  Task #${iteration + 1}: ${task}`)
-      console.log(`🎓  Context: ${context}`)
-      console.log('🎓 ═══════════════════════════════════════\n')
+      console.log(`\n${tag} Task #${iteration + 1}: ${task}`)
 
-      // 2. Take snapshot before
       const beforeSnap = createSnapshot(bot)
       beforeSnap._timestamp = Date.now()
 
-      // 3. Attempt task via skill discovery
-      const result = await discoverSkill(bot, task, context, memory)
+      const result = await discover(bot, task, context, memory)
 
-      // 4. Take snapshot after
       const afterSnap = createSnapshot(bot)
 
-      // 5. Verify with critic
       let success = result.success
       if (success) {
-        const verification = await verifyAction(
-          result.programName || task,
-          task,
-          beforeSnap,
-          afterSnap,
-          false // not built-in, use LLM critic
-        )
+        const verification = await verifyAction(result.programName || task, task, beforeSnap, afterSnap, false)
         success = verification.success
-        if (!success) {
-          console.log(`🎓 Critic rejected: ${verification.critique}`)
-        }
+        if (!success) console.log(`${tag} Critic rejected: ${verification.critique}`)
       }
 
-      // 6. Record experience
-      recordExperience(
-        memory,
-        result.programName || task,
-        task,
-        beforeSnap,
-        afterSnap,
-        success,
-        success ? null : 'Task not completed'
-      )
-
-      // 7. Update curriculum
+      recordExperience(memory, result.programName || task, task, beforeSnap, afterSnap, success, success ? null : 'Task not completed')
       curriculum.updateProgress({ task, success })
       curriculum.syncToMemory(memory)
 
-      // 8. Save skill if successful
       if (success && result.programCode && result.programName) {
-        await skillManager.addSkill({
-          programName: result.programName,
-          programCode: result.programCode
-        })
+        await skillManager.addSkill({ programName: result.programName, programCode: result.programCode })
         memory.skillCount = skillManager.skillCount
+
+        // ส่ง skill ให้ bot อีกตัวผ่าน chat
+        const payload = JSON.stringify({ programName: result.programName, programCode: result.programCode })
+        bot.chat(`SKILL_SHARE:${payload}`)
+        console.log(`${tag} Shared skill: ${result.programName}`)
       }
 
-      // Log progress
-      console.log(`\n🎓 Progress: ${curriculum.completedTasks.length} completed, ${curriculum.failedTasks.length} failed`)
-      console.log(`🎓 Skills in library: ${skillManager.skillCount}`)
+      console.log(`${tag} Progress: ${curriculum.completedTasks.length} completed | Skills: ${skillManager.skillCount}`)
 
       iteration++
       memory.runtime.learningActive = false
-
-      // Small delay between tasks
       await sleep(3000)
 
     } catch (e) {
-      console.log('learning error:', e.message || e)
+      console.log(`${tag} learning error:`, e.message || e)
       memory.runtime.learningActive = false
       await sleep(5000)
     }
   }
 
-  console.log('\n🎓 ═══════════════════════════════════════')
-  console.log('🎓  LEARNING LOOP COMPLETE')
-  console.log(`🎓  Total completed: ${curriculum.completedTasks.length}`)
-  console.log(`🎓  Total failed: ${curriculum.failedTasks.length}`)
-  console.log(`🎓  Skills learned: ${skillManager.skillCount}`)
-  console.log('🎓 ═══════════════════════════════════════\n')
+  console.log(`\n${tag} LEARNING LOOP COMPLETE`)
 }
 
 async function saveLoop(memory) {
   while (true) {
-    try {
-      saveMemory(memory)
-    } catch (e) {
-      console.log('save error:', e.message || e)
-    }
+    try { saveMemory(memory) }
+    catch (e) { console.log('save error:', e.message || e) }
     await sleep(config.loops.saveMs)
   }
 }
 
-function startLoops(bot, memory) {
-  // Core survival loops
+// llmType = 'ollama' | 'groq'
+function startLoops(bot, memory, llmType = 'ollama') {
   heartbeat(bot, memory)
   thinkLoop(bot, memory)
   saveLoop(memory)
-
-  // Learning loop — curriculum-driven skill discovery
   if (config.curriculum?.enabled) {
-    learningLoop(bot, memory)
+    learningLoop(bot, memory, llmType)
   }
 }
 

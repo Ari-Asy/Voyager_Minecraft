@@ -6,9 +6,9 @@ const { loadMemory } = require('./core/memory')
 const { startLoops } = require('./core/loop')
 
 const bot = mineflayer.createBot({
-  host: config.mc.host,
-  port: config.mc.port,
-  username: config.mc.username,
+  host: config.bot1.host,
+  port: config.bot1.port,
+  username: config.bot1.username,
   viewDistance: 'tiny' // 👈 สำคัญที่สุด เรคเควสขอโหลดแค่ 2 chunk รอบตัวก็พอ!
 })
 
