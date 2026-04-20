@@ -1,11 +1,11 @@
 module.exports = {
   bot1: {
-    host: '127.0.0.1',
+    host: '10.2.149.205',
     port: 25565,
     username: 'NPC_Ollama'
   },
   bot2: {
-    host: '127.0.0.1',
+    host: '10.2.149.205',
     port: 25565,
     username: 'NPC_Groq'
   },
