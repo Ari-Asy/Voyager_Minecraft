@@ -7,6 +7,7 @@ const { CurriculumAgent } = require('./curriculum')
 const { getSkillManager } = require('./skillManager')
 const { createSnapshot, recordExperience } = require('./experience')
 const { verifyAction } = require('./critic')
+const { sendSkill, sendStatus } = require('./chatProtocol')
 
 // llmType = 'ollama' | 'groq'
 const { discoverSkill } = require('./skillDiscovery')
@@ -106,16 +107,21 @@ async function learningLoop(bot, memory, llmType) {
         await skillManager.addSkill({ programName: result.programName, programCode: result.programCode })
         memory.skillCount = skillManager.skillCount
 
-        // ส่ง skill ให้ bot อีกตัวผ่าน chat
-        const payload = JSON.stringify({ programName: result.programName, programCode: result.programCode })
-        bot.chat(`SKILL_SHARE:${payload}`)
-        console.log(`${tag} Shared skill: ${result.programName}`)
+        // Phase 3: Share skill with partner bot via chunked chat protocol
+        await sendSkill(bot, result.programName, result.programCode)
       }
 
       console.log(`${tag} Progress: ${curriculum.completedTasks.length} completed | Skills: ${skillManager.skillCount}`)
 
       iteration++
       memory.runtime.learningActive = false
+
+      // Phase 3: Share status periodically
+      const statusInterval = config.chat?.statusInterval || 5
+      if (iteration % statusInterval === 0) {
+        sendStatus(bot, memory)
+      }
+
       await sleep(3000)
 
     } catch (e) {

@@ -3,12 +3,13 @@ const { pathfinder, Movements } = require('mineflayer-pathfinder')
 const config = require('./config')
 const { loadMemory } = require('./core/memory')
 const { startLoops } = require('./core/loop')
-const { getSkillManager } = require('./core/skillManager')
+const { setupChatListener } = require('./core/chatProtocol')
 
 const bot = mineflayer.createBot({
     host: config.bot2.host,
     port: config.bot2.port,
-    username: config.bot2.username
+    username: config.bot2.username,
+    viewDistance: 'tiny'
 })
 
 bot.loadPlugin(pathfinder)
@@ -25,17 +26,8 @@ bot.once('spawn', () => {
         lastThink: 0, alive: true, targetLockUntil: 0, learningActive: false
     }
 
-    // รับ skill จาก Bot1
-    bot.on('chat', (username, message) => {
-        if (username === bot.username) return
-        if (message.startsWith('SKILL_SHARE:')) {
-            try {
-                const data = JSON.parse(message.slice(12))
-                getSkillManager('bot2').addSkillDirect(data)
-                console.log(`[bot2] Received skill: ${data.programName} from ${username}`)
-            } catch { }
-        }
-    })
+    // Phase 3: Setup chat protocol for skill sharing with Bot1
+    setupChatListener(bot, memory, 'bot2')
 
     startLoops(bot, memory, 'groq')
 })

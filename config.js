@@ -44,5 +44,10 @@ module.exports = {
   experience: {
     maxEntries: 500,          // max experience entries to keep
     summaryCount: 10          // how many recent experiences to summarize for LLM
+  },
+  chat: {
+    naturalLanguage: true,    // send human-readable messages between bots (greetings, thanks, etc.)
+    chunkDelay: 600,          // ms delay between skill chunks (anti-spam)
+    statusInterval: 5         // share status every N learning iterations
   }
 }
