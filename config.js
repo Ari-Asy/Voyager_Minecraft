@@ -24,7 +24,7 @@ module.exports = {
   },
   groq: {
     enabled: true,
-    apiKey: 'API_KEY_GROQ', // ใส่ API Key ของ Groq ตรงนี้
+    apiKey: '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', // ใส่ API Key ของ Groq ตรงนี้
     model: 'llama-3.1-8b-instant', // หรือ 'llama-3.3-70b-versatile' ถ้าอยากได้ตัวใหญ่
   },
   thresholds: {

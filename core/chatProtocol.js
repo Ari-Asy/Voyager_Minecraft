@@ -1,7 +1,8 @@
 const { getSkillManager } = require('./skillManager')
 const config = require('../config')
 
-const CHUNK_SIZE = 180 // safe payload per message (under 256 chat limit)
+const CHUNK_SIZE = 100 // safe payload per message (under 256 chat limit)
+const PREFIX = '#'
 
 function getChunkDelay() { return config.chat?.chunkDelay || 600 }
 
@@ -120,8 +121,10 @@ function setupChatListener(bot, memory, botName) {
   // Greet partner on connect
   if (config.chat?.naturalLanguage !== false) {
     setTimeout(() => {
-      const partnerName = getPartnerName(bot.username)
-      bot.chat(`Hello ${partnerName}! I'm ${bot.username}, ready to learn together! 🤝`)
+      try {
+        const partnerName = getPartnerName(bot.username)
+        if (bot.entity) bot.chat(`Hello ${partnerName}! I'm ${bot.username}, ready to learn!`)
+      } catch {}
     }, 3000)
   }
 

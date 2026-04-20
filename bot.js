@@ -36,7 +36,7 @@ bot.once('spawn', () => {
   // Phase 3: Setup chat protocol for skill sharing with Bot2
   setupChatListener(bot, memory, 'bot1')
 
-  startLoops(bot, memory)
+  startLoops(bot, memory, 'ollama')
 })
 
 bot.on('death', () => {
