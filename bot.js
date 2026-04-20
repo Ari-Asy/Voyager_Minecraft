@@ -4,6 +4,7 @@ const { pathfinder, Movements } = require('mineflayer-pathfinder')
 const config = require('./config')
 const { loadMemory } = require('./core/memory')
 const { startLoops } = require('./core/loop')
+const { setupChatListener } = require('./core/chatProtocol')
 
 const bot = mineflayer.createBot({
   host: config.bot1.host,
@@ -30,6 +31,10 @@ bot.once('spawn', () => {
     targetLockUntil: 0,
     learningActive: false
   }
+  memory._botName = 'bot1'
+
+  // Phase 3: Setup chat protocol for skill sharing with Bot2
+  setupChatListener(bot, memory, 'bot1')
 
   startLoops(bot, memory)
 })

@@ -101,6 +101,8 @@ class SkillManager {
     return matched.slice(0, k).map(s => this.skills[s.name].code)
   }
 
+  hasSkill(name) { return !!this.skills[name] }
+
   get skillCount() { return Object.keys(this.skills).length }
 }
 
