@@ -3,8 +3,9 @@
   "version": "1.0.0",
   "main": "bot.js",
   "scripts": {
-    "start": "node bot.js",
-    "start2": "node bot2.js"
+    "start": "node --max-old-space-size=4096 --expose-gc bot.js",
+    "start2": "node --max-old-space-size=4096 --expose-gc bot2.js",
+    "startAll": "node --max-old-space-size=4096 --expose-gc startAll.js"
   },
   "dependencies": {
     "mineflayer": "^4.20.1",

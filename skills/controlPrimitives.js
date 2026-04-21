@@ -159,7 +159,8 @@ async function killMob(bot, name, timeout = 15000) {
 
   while (Date.now() - start < timeout) {
     let target = null
-    for (const e of Object.values(bot.entities)) {
+    for (const id in bot.entities) {
+      const e = bot.entities[id]
       if (e?.name === name && e.isValid) {
         const d = bot.entity.position.distanceTo(e.position)
         if (d < 32 && (!target || d < bot.entity.position.distanceTo(target.position))) {

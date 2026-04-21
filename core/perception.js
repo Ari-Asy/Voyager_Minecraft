@@ -29,7 +29,8 @@ function findNearestTree(bot) {
 function findNearestFoodMob(bot, maxDistance = 24) {
   const names = new Set(['cow', 'pig', 'chicken', 'sheep'])
   let best = null
-  for (const e of Object.values(bot.entities)) {
+  for (const id in bot.entities) {
+    const e = bot.entities[id]
     if (!e?.name || !names.has(e.name)) continue
     const d = bot.entity.position.distanceTo(e.position)
     if (d > maxDistance) continue
@@ -48,7 +49,8 @@ function findNearestFoodMob(bot, maxDistance = 24) {
 function findNearestHostile(bot, maxDistance = 12) {
   const names = new Set(['zombie', 'skeleton', 'creeper', 'spider', 'witch', 'drowned', 'husk'])
   let best = null
-  for (const e of Object.values(bot.entities)) {
+  for (const id in bot.entities) {
+    const e = bot.entities[id]
     if (!e?.name || !names.has(e.name)) continue
     const d = bot.entity.position.distanceTo(e.position)
     if (d > maxDistance) continue

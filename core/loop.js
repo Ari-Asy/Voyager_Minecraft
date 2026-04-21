@@ -22,11 +22,24 @@ async function heartbeat(bot, memory) {
         await sleep(config.loops.heartbeatMs)
         continue
       }
-      const state = perceive(bot, memory)
-      if (state.hostile || state.health <= config.thresholds.lowHealth) {
+      // Lightweight check only — no findBlock, no full entity scan
+      const health = bot.health
+      const food = bot.food
+      let hostile = null
+      const hostileNames = new Set(['zombie', 'skeleton', 'creeper', 'spider', 'witch', 'drowned', 'husk'])
+      for (const id in bot.entities) {
+        const e = bot.entities[id]
+        if (e?.name && hostileNames.has(e.name)) {
+          const d = bot.entity.position.distanceTo(e.position)
+          if (d < 12) { hostile = e.name; break }
+        }
+      }
+
+      if (hostile || health <= config.thresholds.lowHealth) {
         memory.runtime.currentPlan = { action: 'panic', reason: 'heartbeat emergency' }
-      } else if (state.food <= config.thresholds.emergencyFood && state.edibleFood) {
-        memory.runtime.currentPlan = { action: 'eat_food', reason: 'heartbeat emergency eat' }
+      } else if (food <= config.thresholds.emergencyFood) {
+        const edible = bot.inventory.items().find(i => !!bot.registry.foodsByName?.[i.name])
+        if (edible) memory.runtime.currentPlan = { action: 'eat_food', reason: 'heartbeat emergency eat' }
       }
     } catch (e) { console.log('heartbeat error:', e.message || e) }
     await sleep(config.loops.heartbeatMs)
